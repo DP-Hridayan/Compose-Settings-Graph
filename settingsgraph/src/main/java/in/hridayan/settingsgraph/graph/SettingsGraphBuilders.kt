@@ -338,6 +338,10 @@ class RadioGroupItemBuilder internal constructor(private val key: Any) {
         options = optionsList
     }
 
+    fun options(block: RadioOptionsScope.() -> Unit) {
+        options = RadioOptionsScope().apply(block).options
+    }
+
     /**
      * Registers a per-item value-change handler that overrides the global
      * [OnClickDefaults.onIntChanged] for this item only.
@@ -419,6 +423,10 @@ class ButtonGroupItemBuilder internal constructor(private val key: Any) {
     /** Sets the button group options from a list. */
     fun options(optionsList: List<ButtonGroupOption>) {
         options = optionsList
+    }
+
+    fun options(block: ButtonGroupOptionsScope.() -> Unit) {
+        options = ButtonGroupOptionsScope().apply(block).options
     }
 
     /**
@@ -606,6 +614,95 @@ class SettingsGraphBuilder internal constructor() {
         groups.add(SettingsGraphGroup.RawItem(key = key, content = content))
     }
 
-    internal fun build(): SettingsGraph = SettingsGraph(groups = groups)
+    internal fun build(): SettingsGraph {
+        val allKeys = mutableSetOf<String>()
+        groups.forEach { group ->
+            if (group is SettingsGraphGroup.Group) {
+                group.nodes.forEach { node ->
+                    require(allKeys.add(node.keyName)) {
+                        "Duplicate settings key detected: '\'. Keys must be strictly unique within a SettingsGraph."
+                    }
+                }
+            }
+        }
+        return SettingsGraph(groups = groups)
+    }
 }
+
+@SettingsGraphMarker
+class RadioButtonOptionBuilder internal constructor(private val value: Int) {
+    internal var labelResId: Int? = null
+    internal var labelString: String? = null
+
+    fun label(@StringRes resId: Int) {
+        labelResId = resId
+        labelString = null
+    }
+
+    fun label(text: String) {
+        labelString = text
+        labelResId = null
+    }
+
+    internal fun build(): RadioButtonOption = RadioButtonOption(
+        value = value,
+        labelResId = labelResId,
+        labelString = labelString
+    )
+}
+
+@SettingsGraphMarker
+class ButtonGroupOptionBuilder internal constructor(private val value: Int) {
+    internal var labelResId: Int? = null
+    internal var labelString: String? = null
+    internal var iconResId: Int? = null
+    internal var iconVector: ImageVector? = null
+
+    fun label(@StringRes resId: Int) {
+        labelResId = resId
+        labelString = null
+    }
+
+    fun label(text: String) {
+        labelString = text
+        labelResId = null
+    }
+
+    fun icon(@DrawableRes resId: Int) {
+        iconResId = resId
+        iconVector = null
+    }
+
+    fun icon(vector: ImageVector) {
+        iconVector = vector
+        iconResId = null
+    }
+
+    internal fun build(): ButtonGroupOption = ButtonGroupOption(
+        value = value,
+        labelResId = labelResId,
+        labelString = labelString,
+        iconResId = iconResId,
+        iconVector = iconVector
+    )
+}
+
+@SettingsGraphMarker
+class RadioOptionsScope internal constructor() {
+    internal val options = mutableListOf<RadioButtonOption>()
+    fun option(value: Int, block: RadioButtonOptionBuilder.() -> Unit) {
+        options.add(RadioButtonOptionBuilder(value).apply(block).build())
+    }
+}
+
+@SettingsGraphMarker
+class ButtonGroupOptionsScope internal constructor() {
+    internal val options = mutableListOf<ButtonGroupOption>()
+
+    fun option(value: Int, block: ButtonGroupOptionBuilder.() -> Unit) {
+        options.add(ButtonGroupOptionBuilder(value).apply(block).build())
+    }
+}
+
+
 

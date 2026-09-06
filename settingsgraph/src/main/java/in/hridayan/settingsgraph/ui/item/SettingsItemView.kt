@@ -175,8 +175,8 @@ private fun highlightCardColors(isHighlighted: Boolean): CardColors {
         )
     }
 
-    // Finite blink: 3 pulses (~2.4 s total), then stays at normal color.
     val animatable = remember { Animatable(0f) }
+
     LaunchedEffect(Unit) {
         repeat(3) {
             animatable.animateTo(1f, animationSpec = tween(400, easing = LinearEasing))
@@ -449,7 +449,8 @@ private fun RadioGroupItemView(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = stringResource(option.labelResId),
+                        text = option.labelString ?: option.labelResId?.let { stringResource(it) }
+                        ?: "",
                         style = MaterialTheme.typography.titleMediumEmphasized,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.weight(1f),
@@ -491,14 +492,16 @@ private fun ButtonGroupItemView(
                         painter = painterResource(it),
                         contentDescription = null
                     )
+                } ?: option.iconVector?.let {
+                    Icon(
+                        imageVector = it,
+                        contentDescription = null
+                    )
                 }
                 Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
-                Text(text = stringResource(option.labelResId))
+                Text(text = option.labelString ?: option.labelResId?.let { stringResource(it) }
+                ?: "")
             }
         }
     }
 }
-
-
-
-
