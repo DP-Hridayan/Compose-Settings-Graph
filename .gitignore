@@ -1,1 +1,4 @@
-.idea
+/.idea
+/build
+/.kotlin
+local.properties
