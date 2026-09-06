@@ -2,7 +2,7 @@
 
 A declarative, type-safe DSL for building beautiful, perfectly reactive settings screens in Jetpack Compose.
 
-## 📖 [Read the Full Documentation](https://dp-hridayan.github.io/compose-settings-graph/)
+## 📖 [Read the Full Documentation](https://dp-hridayan.github.io/Compose-Settings-Graph)
 
 ### Quick Start
 
