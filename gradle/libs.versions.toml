@@ -1,0 +1,35 @@
+[versions]
+activityCompose = "1.13.0"
+agp = "9.4.0"
+composeBom = "2026.08.00"
+coreKtx = "1.19.0"
+kotlin = "2.4.10"
+material = "1.14.0"
+material3 = "1.5.0-alpha27"
+materialIconsExtended = "1.7.8"
+appcompat = "1.8.0"
+vanniktech-maven-publish = "0.37.0"
+compose-stability-analyzer = "0.13.0"
+annotation = "1.10.0"
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+vanniktech-maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-maven-publish"}
+compose-stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version.ref = "compose-stability-analyzer" }
+
+[libraries]
+activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
+
