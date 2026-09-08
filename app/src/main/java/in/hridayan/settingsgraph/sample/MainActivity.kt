@@ -191,12 +191,6 @@ class MainActivity : ComponentActivity() {
                                         icon(Icons.Default.Science)
                                         experimentalFlagText("Alpha")
                                         visible { developerMode }
-                                        onClick {
-                                            prefs.putBoolean(
-                                                "experimental_features",
-                                                !experimentalFeatures
-                                            )
-                                        }
                                     }
 
                                     clickableItem("clear_cache") {

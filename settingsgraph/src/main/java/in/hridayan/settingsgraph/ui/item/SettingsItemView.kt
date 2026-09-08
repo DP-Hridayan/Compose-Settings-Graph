@@ -85,7 +85,7 @@ fun SettingsItemView(
     hapticsEnabled: Boolean = true,
     isChecked: Boolean = false,
     selectedValue: Int = -1,
-    onClick: () -> Unit = {},
+    onClick: (() -> Unit)? = null,
     onCheckedChange: (Boolean) -> Unit = {},
     onValueChange: (Int) -> Unit = {},
 ) {
@@ -98,9 +98,11 @@ fun SettingsItemView(
         }
     }
     val wrappedOnClick = remember(onClick, hapticsEnabled) {
-        {
-            if (hapticsEnabled) haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
-            onClick()
+        onClick?.let {
+            {
+                if (hapticsEnabled) haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
+                it.invoke()
+            }
         }
     }
     val wrappedOnValueChange = remember(onValueChange, hapticsEnabled) {
@@ -111,7 +113,7 @@ fun SettingsItemView(
     }
 
     when (behavior) {
-        is ItemBehavior.Switch -> SwitchItemView(
+                is ItemBehavior.Switch -> SwitchItemView(
             modifier = modifier,
             title = title,
             description = description,
@@ -122,14 +124,16 @@ fun SettingsItemView(
             experimentalFlagText = experimentalFlagText,
             enabled = enabled,
             isChecked = isChecked,
+            onClick = wrappedOnClick,
             onCheckedChange = wrappedOnCheckedChange,
         )
 
-        is ItemBehavior.SwitchBanner -> SwitchBannerItemView(
+                is ItemBehavior.SwitchBanner -> SwitchBannerItemView(
             modifier = modifier,
             title = title,
             enabled = enabled,
             isChecked = isChecked,
+            onClick = wrappedOnClick,
             onCheckedChange = wrappedOnCheckedChange,
         )
 
@@ -143,7 +147,7 @@ fun SettingsItemView(
             isHighlighted = isHighlighted,
             experimentalFlagText = experimentalFlagText,
             enabled = enabled,
-            onClick = wrappedOnClick,
+            onClick = wrappedOnClick ?: {},
         )
 
         is ItemBehavior.RadioGroup -> RadioGroupItemView(
@@ -330,6 +334,7 @@ private fun SwitchItemView(
     experimentalFlagText: String,
     enabled: Boolean,
     isChecked: Boolean,
+    onClick: (() -> Unit)?,
     onCheckedChange: (Boolean) -> Unit
 ) {
     CustomCard(
@@ -337,7 +342,7 @@ private fun SwitchItemView(
         shape = shape,
         colors = highlightCardColors(isHighlighted),
         clickable = enabled,
-        onClick = { onCheckedChange(!isChecked) }
+        onClick = onClick ?: { onCheckedChange(!isChecked) }
     ) {
         Row(
             modifier = Modifier
@@ -386,6 +391,7 @@ private fun SwitchBannerItemView(
     title: String,
     enabled: Boolean,
     isChecked: Boolean,
+    onClick: (() -> Unit)?,
     onCheckedChange: (Boolean) -> Unit
 ) {
     CustomCard(
@@ -400,7 +406,7 @@ private fun SwitchBannerItemView(
             },
         ),
         clickable = enabled,
-        onClick = { onCheckedChange(!isChecked) },
+        onClick = onClick ?: { onCheckedChange(!isChecked) },
     ) {
         Row(
             modifier = Modifier

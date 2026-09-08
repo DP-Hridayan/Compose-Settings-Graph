@@ -192,7 +192,7 @@ fun SettingsColumn(
                         selectedValue = node.resolveSelectedValue(globalDefaults),
                         itemPaddingHorizontal = itemPaddingHorizontal,
                         itemPaddingVertical = itemPaddingVertical,
-                        onClick = node.onClickOverride ?: NoOpAnyCallback,
+                        onClick = node.onClickOverride,
                         onCheckedChange = node.onCheckedChangeOverride
                             ?: globalDefaults.onBooleanChanged ?: NoOpAnyBooleanCallback,
                         onIntChanged = node.onIntChangedOverride
@@ -238,7 +238,7 @@ private fun LazyItemScope.SettingsItemEntry(
     selectedValue: Int,
     itemPaddingHorizontal: Dp,
     itemPaddingVertical: Dp,
-    onClick: (Any) -> Unit,
+    onClick: ((Any) -> Unit)?,
     onCheckedChange: (Any, Boolean) -> Unit,
     onIntChanged: (Any, Int) -> Unit,
 ) {
@@ -246,7 +246,11 @@ private fun LazyItemScope.SettingsItemEntry(
     val currentOnCheckedChange by rememberUpdatedState(onCheckedChange)
     val currentOnIntChanged by rememberUpdatedState(onIntChanged)
 
-    val onClickLambda = remember(nodeKey) { { currentOnClick(nodeKey) } }
+        val onClickLambda = remember(nodeKey, onClick != null) {
+        if (onClick != null) {
+            { currentOnClick?.invoke(nodeKey) ?: Unit }
+        } else null
+    }
     val onCheckedChangeLambda =
         remember(nodeKey) { { v: Boolean -> currentOnCheckedChange(nodeKey, v) } }
     val onValueChangeLambda = remember(nodeKey) { { v: Int -> currentOnIntChanged(nodeKey, v) } }
@@ -389,4 +393,3 @@ private fun SettingsNode.resolveSelectedValue(defaults: OnClickDefaults): Int = 
 
     else -> -1
 }
-
