@@ -27,7 +27,7 @@ abstract class BaseItemBuilder {
     internal var staticTitleRes: Int? = null
     internal var staticTitleString: String = ""
     internal var dynamicTitle: (@Composable () -> String)? = null
-    internal var enabled: Boolean = true
+    internal var enabledLambda: () -> Boolean = { true }
     internal var visibleLambda: () -> Boolean = { true }
     internal var onClickOverride: ((Any) -> Unit)? = null
 
@@ -71,8 +71,13 @@ abstract class BaseItemBuilder {
     }
 
     /** Controls whether this item is interactable. */
+    fun enabled(block: () -> Boolean) {
+        enabledLambda = block
+    }
+
+    /** Controls whether this item is interactable. */
     fun enabled(value: Boolean) {
-        enabled = value
+        enabledLambda = { value }
     }
 
     /**
@@ -191,7 +196,7 @@ class ClickableItemBuilder internal constructor(private val key: Any) : BadgeIte
         iconVector = iconVector,
         experimentalFlagTextRes = experimentalFlagTextRes,
         experimentalFlagTextString = experimentalFlagTextString,
-        enabled = enabled,
+        enabled = enabledLambda,
         behavior = ItemBehavior.Clickable,
         onClickOverride = onClickOverride,
     )
@@ -239,7 +244,7 @@ class SwitchItemBuilder internal constructor(private val key: Any) : BadgeItemBu
         iconVector = iconVector,
         experimentalFlagTextRes = experimentalFlagTextRes,
         experimentalFlagTextString = experimentalFlagTextString,
-        enabled = enabled,
+        enabled = enabledLambda,
         behavior = ItemBehavior.Switch,
         onClickOverride = onClickOverride,
         onCheckedChangeOverride = onCheckedChangeOverride,
@@ -289,7 +294,7 @@ class SwitchBannerItemBuilder internal constructor(private val key: Any) : BaseI
         iconVector = null,
         experimentalFlagTextRes = null,
         experimentalFlagTextString = "",
-        enabled = enabled,
+        enabled = enabledLambda,
         behavior = ItemBehavior.SwitchBanner,
         onClickOverride = onClickOverride,
         onCheckedChangeOverride = onCheckedChangeOverride,
@@ -308,7 +313,7 @@ class SwitchBannerItemBuilder internal constructor(private val key: Any) : BaseI
 @SettingsGraphMarker
 class RadioGroupItemBuilder internal constructor(private val key: Any) {
     internal var visibleLambda: () -> Boolean = { true }
-    internal var enabledValue: Boolean = true
+    internal var enabledLambda: () -> Boolean = { true }
     internal var options: List<RadioButtonOption> = emptyList()
     internal var onIntChangedOverride: ((Any, Int) -> Unit)? = null
     internal var selectedValueOverride: ((Any) -> Int)? = null
@@ -324,8 +329,12 @@ class RadioGroupItemBuilder internal constructor(private val key: Any) {
     }
 
     /** Controls whether this item is interactable. */
+    fun enabled(block: () -> Boolean) {
+        enabledLambda = block
+    }
+
     fun enabled(value: Boolean) {
-        enabledValue = value
+        enabledLambda = { value }
     }
 
     /** Sets the radio options using varargs. */
@@ -376,7 +385,7 @@ class RadioGroupItemBuilder internal constructor(private val key: Any) {
         iconVector = null,
         experimentalFlagTextRes = null,
         experimentalFlagTextString = "",
-        enabled = enabledValue,
+        enabled = enabledLambda,
         behavior = ItemBehavior.RadioGroup(options),
         radioOptions = options,
         onIntChangedOverride = onIntChangedOverride,
@@ -395,7 +404,7 @@ class RadioGroupItemBuilder internal constructor(private val key: Any) {
 @SettingsGraphMarker
 class ButtonGroupItemBuilder internal constructor(private val key: Any) {
     internal var visibleLambda: () -> Boolean = { true }
-    internal var enabledValue: Boolean = true
+    internal var enabledLambda: () -> Boolean = { true }
     internal var options: List<ButtonGroupOption> = emptyList()
     internal var onIntChangedOverride: ((Any, Int) -> Unit)? = null
     internal var selectedValueOverride: ((Any) -> Int)? = null
@@ -411,8 +420,12 @@ class ButtonGroupItemBuilder internal constructor(private val key: Any) {
     }
 
     /** Controls whether this item is interactable. */
+    fun enabled(block: () -> Boolean) {
+        enabledLambda = block
+    }
+
     fun enabled(value: Boolean) {
-        enabledValue = value
+        enabledLambda = { value }
     }
 
     /** Sets the button group options using varargs. */
@@ -463,7 +476,7 @@ class ButtonGroupItemBuilder internal constructor(private val key: Any) {
         iconVector = null,
         experimentalFlagTextRes = null,
         experimentalFlagTextString = "",
-        enabled = enabledValue,
+        enabled = enabledLambda,
         behavior = ItemBehavior.ButtonGroup(options),
         buttonOptions = options,
         onIntChangedOverride = onIntChangedOverride,
@@ -703,6 +716,3 @@ class ButtonGroupOptionsScope internal constructor() {
         options.add(ButtonGroupOptionBuilder(value).apply(block).build())
     }
 }
-
-
-

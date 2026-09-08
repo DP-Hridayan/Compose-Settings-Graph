@@ -498,7 +498,9 @@ private fun ButtonGroupItemView(
                         contentDescription = null
                     )
                 }
+
                 Spacer(Modifier.size(ToggleButtonDefaults.IconSpacing))
+
                 Text(text = option.labelString ?: option.labelResId?.let { stringResource(it) }
                 ?: "")
             }

@@ -60,7 +60,7 @@ internal data class SettingsNode(
     val iconVector: ImageVector?,
     @StringRes val experimentalFlagTextRes: Int?,
     val experimentalFlagTextString: String,
-    val enabled: Boolean,
+    val enabled: () -> Boolean,
     val behavior: ItemBehavior,
     val radioOptions: List<RadioButtonOption> = emptyList(),
     val buttonOptions: List<ButtonGroupOption> = emptyList(),
@@ -70,3 +70,4 @@ internal data class SettingsNode(
     val isCheckedOverride: ((Any) -> Boolean)? = null,
     val selectedValueOverride: ((Any) -> Int)? = null,
 )
+

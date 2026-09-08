@@ -186,7 +186,7 @@ fun SettingsColumn(
                         isHighlighted = node.keyName == blinkKey.value,
                         experimentalFlagText = node.resolveExperimentalFlagText(),
                         behavior = node.behavior,
-                        enabled = node.enabled,
+                        enabled = node.enabled(),
                         hapticsEnabled = hapticsEnabled,
                         isChecked = node.resolveIsChecked(globalDefaults),
                         selectedValue = node.resolveSelectedValue(globalDefaults),
@@ -389,3 +389,4 @@ private fun SettingsNode.resolveSelectedValue(defaults: OnClickDefaults): Int = 
 
     else -> -1
 }
+

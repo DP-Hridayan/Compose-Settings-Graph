@@ -203,7 +203,7 @@ class MainActivity : ComponentActivity() {
                                         title("Clear App Preferences")
                                         description("Revert settings back to defaults")
                                         icon(Icons.Default.Delete)
-                                        enabled(experimentalFeatures)
+                                        enabled { experimentalFeatures }
                                         visible { developerMode }
                                         onClick {
                                             prefs.clear()
@@ -270,10 +270,3 @@ fun ProfileHeader() {
         }
     }
 }
-
-
-
-
-
-
-
