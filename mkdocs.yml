@@ -29,5 +29,7 @@ plugins:
 
 nav:
   - Overview: index.md
-  - Usage: usage.md
+  - Core Concepts: core_concepts.md
+  - Item Types: item_types.md
+  - Advanced Features: advanced_features.md
   - Customization: customization.md
