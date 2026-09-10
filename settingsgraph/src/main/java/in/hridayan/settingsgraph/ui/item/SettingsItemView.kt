@@ -375,11 +375,10 @@ private fun SwitchItemView(
                     )
                 }
             }
-            // Switch also fires haptic via onCheckedChange which already wraps the haptic call
             SettingsSwitch(
                 checked = isChecked,
                 enabled = enabled,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = if (onClick != null) { { onClick() } } else onCheckedChange
             )
         }
     }
@@ -426,7 +425,7 @@ private fun SwitchBannerItemView(
             SettingsSwitch(
                 checked = isChecked,
                 enabled = enabled,
-                onCheckedChange = onCheckedChange
+                onCheckedChange = if (onClick != null) { { onClick() } } else onCheckedChange
             )
         }
     }
