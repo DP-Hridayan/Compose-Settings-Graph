@@ -113,7 +113,7 @@ fun SettingsItemView(
     }
 
     when (behavior) {
-                is ItemBehavior.Switch -> SwitchItemView(
+        is ItemBehavior.Switch -> SwitchItemView(
             modifier = modifier,
             title = title,
             description = description,
@@ -128,7 +128,7 @@ fun SettingsItemView(
             onCheckedChange = wrappedOnCheckedChange,
         )
 
-                is ItemBehavior.SwitchBanner -> SwitchBannerItemView(
+        is ItemBehavior.SwitchBanner -> SwitchBannerItemView(
             modifier = modifier,
             title = title,
             enabled = enabled,
@@ -216,9 +216,12 @@ private fun SettingsSwitch(
 }
 
 @Composable
-private fun ItemLeadingIcon(icon: ImageVector?, @DrawableRes iconResId: Int?) {
-    val containerColor = MaterialTheme.colorScheme.primaryContainer
-    val contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+private fun ItemLeadingIcon(icon: ImageVector?, @DrawableRes iconResId: Int?, enabled: Boolean) {
+    val containerColor =
+        MaterialTheme.colorScheme.run { if (enabled) primaryContainer else surfaceContainerHigh }
+    val contentColor =
+        MaterialTheme.colorScheme.run { if (enabled) onPrimaryContainer else onSurface }
+
     val iconSize = 20.dp
     val iconBgShape = CircleShape
 
@@ -296,7 +299,7 @@ private fun ClickableItemView(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(17.dp),
         ) {
-            ItemLeadingIcon(icon = icon, iconResId = iconResId)
+            ItemLeadingIcon(icon = icon, iconResId = iconResId, enabled = enabled)
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -351,7 +354,7 @@ private fun SwitchItemView(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(17.dp),
         ) {
-            ItemLeadingIcon(icon = icon, iconResId = iconResId)
+            ItemLeadingIcon(icon = icon, iconResId = iconResId, enabled = enabled)
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -378,7 +381,9 @@ private fun SwitchItemView(
             SettingsSwitch(
                 checked = isChecked,
                 enabled = enabled,
-                onCheckedChange = if (onClick != null) { { onClick() } } else onCheckedChange
+                onCheckedChange = if (onClick != null) {
+                    { onClick() }
+                } else onCheckedChange
             )
         }
     }
@@ -425,7 +430,9 @@ private fun SwitchBannerItemView(
             SettingsSwitch(
                 checked = isChecked,
                 enabled = enabled,
-                onCheckedChange = if (onClick != null) { { onClick() } } else onCheckedChange
+                onCheckedChange = if (onClick != null) {
+                    { onClick() }
+                } else onCheckedChange
             )
         }
     }
