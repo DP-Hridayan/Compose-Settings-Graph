@@ -1,3 +1,7 @@
+import org.gradle.kotlin.dsl.assign
+import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.android.application)
@@ -6,14 +10,17 @@ plugins {
 
 android {
     namespace = "in.hridayan.settingsgraph.sample"
-    compileSdk = 37
+
+    compileSdk {
+        version = release(37)
+    }
 
     defaultConfig {
         applicationId = "in.hridayan.settingsgraph.sample"
         minSdk = 28
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 37
+        versionCode = 3
+        versionName = "1.2.0"
     }
 
     compileOptions {
@@ -21,12 +28,14 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 
-    kotlin {
-        jvmToolchain(21)
-    }
-
     buildFeatures {
         compose = true
+    }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_21
     }
 }
 
