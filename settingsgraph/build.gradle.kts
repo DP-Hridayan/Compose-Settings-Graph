@@ -44,7 +44,7 @@ mavenPublishing {
     coordinates(
         groupId = "io.github.dp-hridayan",
         artifactId = "compose-settings-graph",
-        version = "1.2.0"
+        version = "1.3.0"
     )
 
     pom {

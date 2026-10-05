@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.assign
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -20,7 +19,7 @@ android {
         minSdk = 28
         targetSdk = 37
         versionCode = 3
-        versionName = "1.2.0"
+        versionName = "1.3.0"
     }
 
     compileOptions {
