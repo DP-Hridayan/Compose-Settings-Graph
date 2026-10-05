@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import `in`.hridayan.settingsgraph.search.searchGraph
 import `in`.hridayan.settingsgraph.ui.OnClickDefaults
 import `in`.hridayan.settingsgraph.ui.SettingsColumn
+import `in`.hridayan.settingsgraph.ui.item.SettingsItemIconColors
 
 /**
  * Internal runtime representation of a single settings item inside a [SettingsGraph].
@@ -28,6 +29,7 @@ import `in`.hridayan.settingsgraph.ui.SettingsColumn
  * @param staticDescString Plain string description.
  * @param iconResId Drawable resource ID for the leading icon.
  * @param iconVector [ImageVector] for the leading icon.
+ * @param dynamicIconColors A [Composable] lambda that returns the leading icon colors.
  * @param experimentalFlagTextRes String resource for the experimental badge text. Null means no badge.
  * @param experimentalFlagTextString Plain string for the experimental badge text.
  * @param behavior The interaction type of this item.
@@ -58,6 +60,7 @@ internal data class SettingsNode(
     val staticDescString: String,
     @DrawableRes val iconResId: Int?,
     val iconVector: ImageVector?,
+    val dynamicIconColors: (@Composable () -> SettingsItemIconColors)? = null,
     @StringRes val experimentalFlagTextRes: Int?,
     val experimentalFlagTextString: String,
     val enabled: () -> Boolean,

@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -42,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -60,6 +62,77 @@ import `in`.hridayan.settingsgraph.ui.card.cardPressRotation
 import `in`.hridayan.settingsgraph.ui.card.cardShapeForPosition
 
 /**
+ * Represents the container and content colors for a settings item's leading icon.
+ *
+ * @param containerColor Background color of the icon container when enabled.
+ * @param contentColor Tint color of the icon when enabled.
+ */
+@Immutable
+class SettingsItemIconColors(
+    val containerColor: Color,
+    val contentColor: Color,
+) {
+    fun copy(
+        containerColor: Color = this.containerColor,
+        contentColor: Color = this.contentColor,
+    ): SettingsItemIconColors = SettingsItemIconColors(
+        containerColor = containerColor,
+        contentColor = contentColor,
+    )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is SettingsItemIconColors) return false
+        return containerColor == other.containerColor && contentColor == other.contentColor
+    }
+
+    override fun hashCode(): Int {
+        var result = containerColor.hashCode()
+        result = 31 * result + contentColor.hashCode()
+        return result
+    }
+}
+
+/**
+ * Default color configurations for settings items.
+ */
+object SettingsItemDefaults {
+    /**
+     * Creates a [SettingsItemIconColors] with the specified colors for the enabled state.
+     *
+     * In the disabled state, the colors fall back to the surface color scheme.
+     *
+     * @param containerColor Background color of the icon container when enabled.
+     * @param contentColor Tint color of the icon when enabled.
+     */
+    @Composable
+    fun iconColors(
+        containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+    ): SettingsItemIconColors = SettingsItemIconColors(
+        containerColor = containerColor,
+        contentColor = contentColor,
+    )
+}
+
+/**
+ * Creates a [SettingsItemIconColors] with the specified colors for the enabled state.
+ *
+ * In the disabled state, the colors fall back to the surface color scheme.
+ *
+ * @param containerColor Background color of the icon container when enabled.
+ * @param contentColor Tint color of the icon when enabled.
+ */
+@Composable
+fun iconColors(
+    containerColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    contentColor: Color = MaterialTheme.colorScheme.onPrimaryContainer,
+): SettingsItemIconColors = SettingsItemDefaults.iconColors(
+    containerColor = containerColor,
+    contentColor = contentColor,
+)
+
+/**
  * Renders a single settings item matching the app item UI:
  * - Switches: check/close thumb icon
  * - SwitchBanner: always primaryContainer, rounded pill, headlineSmall
@@ -71,6 +144,7 @@ import `in`.hridayan.settingsgraph.ui.card.cardShapeForPosition
  * correctly — e.g. toggling [isChecked] won't re-draw the title or icon.
  *
  * @param hapticsEnabled Whether haptic feedback fires on all interactions.
+ * @param iconColors Colors for the leading icon in enabled state.
  */
 @Composable
 fun SettingsItemView(
@@ -79,6 +153,7 @@ fun SettingsItemView(
     description: String = "",
     icon: ImageVector? = null,
     @DrawableRes iconResId: Int? = null,
+    iconColors: SettingsItemIconColors = SettingsItemDefaults.iconColors(),
     shape: CustomCardShape = CustomCardShape(),
     isHighlighted: Boolean = false,
     experimentalFlagText: String = "Experimental",
@@ -121,6 +196,7 @@ fun SettingsItemView(
             description = description,
             icon = icon,
             iconResId = iconResId,
+            iconColors = iconColors,
             shape = shape,
             isHighlighted = isHighlighted,
             experimentalFlagText = experimentalFlagText,
@@ -145,6 +221,7 @@ fun SettingsItemView(
             description = description,
             icon = icon,
             iconResId = iconResId,
+            iconColors = iconColors,
             shape = shape,
             isHighlighted = isHighlighted,
             experimentalFlagText = experimentalFlagText,
@@ -217,33 +294,41 @@ private fun SettingsSwitch(
     )
 }
 
-@Composable
-private fun ItemLeadingIcon(icon: ImageVector?, @DrawableRes iconResId: Int?, enabled: Boolean) {
-    val containerColor =
-        MaterialTheme.colorScheme.run { if (enabled) primaryContainer else surfaceContainerHigh }
-    val contentColor =
-        MaterialTheme.colorScheme.run { if (enabled) onPrimaryContainer else onSurface }
+private const val ICON_ROTATION_DEGREES = -15f
+private val ICON_SIZE = 20.dp
+private val ICON_ELEVATION = 1.dp
+private val ICON_CONTAINER_PADDING = 10.dp
 
-    val iconSize = 20.dp
+@Composable
+private fun ItemLeadingIcon(
+    icon: ImageVector?,
+    @DrawableRes iconResId: Int?,
+    enabled: Boolean,
+    colors: SettingsItemIconColors = SettingsItemDefaults.iconColors(),
+) {
+    val containerColor =
+        if (enabled) colors.containerColor else MaterialTheme.colorScheme.surfaceContainerHigh
+    val contentColor =
+        if (enabled) colors.contentColor else MaterialTheme.colorScheme.onSurface
 
     Box(
         modifier = Modifier
-            .cardPressRotation(-15f)
-            .cardPressClip(defaultShape = CircleShape, elevation = 1.dp)
+            .cardPressRotation(ICON_ROTATION_DEGREES)
+            .cardPressClip(defaultShape = CircleShape, elevation = ICON_ELEVATION)
             .background(containerColor)
-            .padding(10.dp),
+            .padding(ICON_CONTAINER_PADDING),
         contentAlignment = Alignment.Center
     ) {
         when {
             icon != null -> Icon(
-                modifier = Modifier.size(iconSize),
+                modifier = Modifier.size(ICON_SIZE),
                 imageVector = icon,
                 contentDescription = null,
                 tint = contentColor
             )
 
             iconResId != null -> Icon(
-                modifier = Modifier.size(iconSize),
+                modifier = Modifier.size(ICON_SIZE),
                 painter = painterResource(iconResId),
                 contentDescription = null,
                 tint = contentColor
@@ -280,6 +365,7 @@ private fun ClickableItemView(
     description: String,
     icon: ImageVector?,
     @DrawableRes iconResId: Int?,
+    iconColors: SettingsItemIconColors,
     shape: CustomCardShape,
     isHighlighted: Boolean,
     experimentalFlagText: String,
@@ -300,7 +386,12 @@ private fun ClickableItemView(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(17.dp),
         ) {
-            ItemLeadingIcon(icon = icon, iconResId = iconResId, enabled = enabled)
+            ItemLeadingIcon(
+                icon = icon,
+                iconResId = iconResId,
+                enabled = enabled,
+                colors = iconColors,
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -333,6 +424,7 @@ private fun SwitchItemView(
     description: String,
     icon: ImageVector?,
     @DrawableRes iconResId: Int?,
+    iconColors: SettingsItemIconColors,
     shape: CustomCardShape,
     isHighlighted: Boolean,
     experimentalFlagText: String,
@@ -355,7 +447,12 @@ private fun SwitchItemView(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(17.dp),
         ) {
-            ItemLeadingIcon(icon = icon, iconResId = iconResId, enabled = enabled)
+            ItemLeadingIcon(
+                icon = icon,
+                iconResId = iconResId,
+                enabled = enabled,
+                colors = iconColors,
+            )
 
             Column(
                 modifier = Modifier.weight(1f),

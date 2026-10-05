@@ -33,6 +33,8 @@ import `in`.hridayan.settingsgraph.model.SettingsGraphGroup
 import `in`.hridayan.settingsgraph.model.SettingsNode
 import `in`.hridayan.settingsgraph.ui.card.CustomCardShape
 import `in`.hridayan.settingsgraph.ui.card.cardShapeForPosition
+import `in`.hridayan.settingsgraph.ui.item.SettingsItemDefaults
+import `in`.hridayan.settingsgraph.ui.item.SettingsItemIconColors
 import `in`.hridayan.settingsgraph.ui.item.SettingsItemView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNotNull
@@ -182,6 +184,7 @@ fun SettingsColumn(
                         description = node.resolveDescription(),
                         iconVector = node.iconVector,
                         iconResId = node.iconResId,
+                        iconColors = node.resolveIconColors(),
                         shape = cardShapeForPosition(renderEntry.position, renderEntry.count),
                         isHighlighted = node.keyName == blinkKey.value,
                         experimentalFlagText = node.resolveExperimentalFlagText(),
@@ -228,6 +231,7 @@ private fun LazyItemScope.SettingsItemEntry(
     description: String,
     iconVector: ImageVector?,
     @DrawableRes iconResId: Int?,
+    iconColors: SettingsItemIconColors,
     shape: CustomCardShape,
     isHighlighted: Boolean,
     experimentalFlagText: String,
@@ -267,6 +271,7 @@ private fun LazyItemScope.SettingsItemEntry(
         description = description,
         icon = iconVector,
         iconResId = iconResId,
+        iconColors = iconColors,
         shape = shape,
         isHighlighted = isHighlighted,
         experimentalFlagText = experimentalFlagText,
@@ -393,3 +398,7 @@ private fun SettingsNode.resolveSelectedValue(defaults: OnClickDefaults): Int = 
 
     else -> -1
 }
+
+@Composable
+private fun SettingsNode.resolveIconColors(): SettingsItemIconColors =
+    dynamicIconColors?.invoke() ?: SettingsItemDefaults.iconColors()

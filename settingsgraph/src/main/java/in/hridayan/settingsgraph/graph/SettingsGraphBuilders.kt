@@ -3,6 +3,7 @@ package `in`.hridayan.settingsgraph.graph
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import `in`.hridayan.settingsgraph.model.ButtonGroupOption
 import `in`.hridayan.settingsgraph.model.ItemBehavior
@@ -12,6 +13,7 @@ import `in`.hridayan.settingsgraph.model.SettingsGraphGroup
 import `in`.hridayan.settingsgraph.model.SettingsNode
 import `in`.hridayan.settingsgraph.ui.OnClickDefaults
 import `in`.hridayan.settingsgraph.ui.SettingsColumn
+import `in`.hridayan.settingsgraph.ui.item.SettingsItemIconColors
 
 @DslMarker
 annotation class SettingsGraphMarker
@@ -60,7 +62,7 @@ abstract class BaseItemBuilder {
     /**
      * Controls whether this item is rendered.
      *
-     * The lambda is evaluated in pure Kotlin context � do not call Compose APIs inside it.
+     * The lambda is evaluated in pure Kotlin context  do not call Compose APIs inside it.
      * Read pre-computed values from the enclosing composable scope instead. The containing
      * composable must recompose for visibility changes to take effect.
      *
@@ -137,6 +139,7 @@ abstract class DescribedItemBuilder : BaseItemBuilder() {
 abstract class IconItemBuilder : DescribedItemBuilder() {
     internal var iconResId: Int? = null
     internal var iconVector: ImageVector? = null
+    internal var dynamicIconColors: (@Composable () -> SettingsItemIconColors)? = null
 
     /** Sets the leading icon from a drawable resource. */
     fun icon(@DrawableRes resId: Int) {
@@ -148,6 +151,39 @@ abstract class IconItemBuilder : DescribedItemBuilder() {
     fun icon(vector: ImageVector) {
         iconVector = vector
         iconResId = null
+    }
+
+    /**
+     * Sets the leading icon colors via a composable lambda.
+     *
+     * @param block Composable lambda returning [SettingsItemIconColors].
+     */
+    fun iconColors(block: @Composable () -> SettingsItemIconColors) {
+        dynamicIconColors = block
+    }
+
+    /**
+     * Sets the leading icon colors.
+     *
+     * @param colors The icon colors to use when enabled.
+     */
+    fun iconColors(colors: SettingsItemIconColors) {
+        dynamicIconColors = { colors }
+    }
+
+    /**
+     * Sets the leading icon colors using specific container and content colors.
+     *
+     * @param containerColor Background color of the icon container when enabled.
+     * @param contentColor Tint color of the icon when enabled.
+     */
+    fun iconColors(containerColor: Color, contentColor: Color) {
+        dynamicIconColors = {
+            SettingsItemIconColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+            )
+        }
     }
 }
 
@@ -194,6 +230,7 @@ class ClickableItemBuilder internal constructor(private val key: Any) : BadgeIte
         staticDescString = staticDescString,
         iconResId = iconResId,
         iconVector = iconVector,
+        dynamicIconColors = dynamicIconColors,
         experimentalFlagTextRes = experimentalFlagTextRes,
         experimentalFlagTextString = experimentalFlagTextString,
         enabled = enabledLambda,
@@ -242,6 +279,7 @@ class SwitchItemBuilder internal constructor(private val key: Any) : BadgeItemBu
         staticDescString = staticDescString,
         iconResId = iconResId,
         iconVector = iconVector,
+        dynamicIconColors = dynamicIconColors,
         experimentalFlagTextRes = experimentalFlagTextRes,
         experimentalFlagTextString = experimentalFlagTextString,
         enabled = enabledLambda,
@@ -509,10 +547,19 @@ class GraphGroupScope internal constructor() {
      * Adds a switch item to this group.
      *
      * @param key The key identifying this setting. Can be any type.
+     * @param iconColors Optional composable lambda returning [SettingsItemIconColors].
      * @param block Builder block to configure the item.
      */
-    fun switchItem(key: Any, block: SwitchItemBuilder.() -> Unit) {
-        nodes.add(SwitchItemBuilder(key).apply(block).build())
+    fun switchItem(
+        key: Any,
+        iconColors: (@Composable () -> SettingsItemIconColors)? = null,
+        block: SwitchItemBuilder.() -> Unit,
+    ) {
+        val builder = SwitchItemBuilder(key)
+        if (iconColors != null) {
+            builder.iconColors(iconColors)
+        }
+        nodes.add(builder.apply(block).build())
     }
 
     /**
@@ -529,10 +576,19 @@ class GraphGroupScope internal constructor() {
      * Adds a clickable item to this group.
      *
      * @param key The key identifying this setting.
+     * @param iconColors Optional composable lambda returning [SettingsItemIconColors].
      * @param block Builder block to configure the item.
      */
-    fun clickableItem(key: Any, block: ClickableItemBuilder.() -> Unit) {
-        nodes.add(ClickableItemBuilder(key).apply(block).build())
+    fun clickableItem(
+        key: Any,
+        iconColors: (@Composable () -> SettingsItemIconColors)? = null,
+        block: ClickableItemBuilder.() -> Unit,
+    ) {
+        val builder = ClickableItemBuilder(key)
+        if (iconColors != null) {
+            builder.iconColors(iconColors)
+        }
+        nodes.add(builder.apply(block).build())
     }
 
     /**

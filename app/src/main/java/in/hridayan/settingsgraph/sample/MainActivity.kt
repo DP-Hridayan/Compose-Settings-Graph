@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import `in`.hridayan.settingsgraph.ui.LocalSettingGraphState
 import `in`.hridayan.settingsgraph.ui.SettingsColumn
+import `in`.hridayan.settingsgraph.ui.item.SettingsItemDefaults
 import `in`.hridayan.settingsgraph.ui.rememberSettingsGraphState
 
 /** A generic preference wrapper for the demo app */
@@ -175,6 +176,12 @@ class MainActivity : ComponentActivity() {
                                         title("Haptic Feedback")
                                         description("Vibrate on interactions")
                                         icon(Icons.Default.TouchApp)
+                                        iconColors {
+                                            SettingsItemDefaults.iconColors(
+                                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            )
+                                        }
                                     }
                                 }
 
@@ -197,6 +204,12 @@ class MainActivity : ComponentActivity() {
                                         title("Clear App Preferences")
                                         description("Revert settings back to defaults")
                                         icon(Icons.Default.Delete)
+                                        iconColors {
+                                            SettingsItemDefaults.iconColors(
+                                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                            )
+                                        }
                                         enabled { experimentalFeatures }
                                         visible { developerMode }
                                         onClick {
