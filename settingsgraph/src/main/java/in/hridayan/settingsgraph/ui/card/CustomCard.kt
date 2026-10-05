@@ -229,7 +229,7 @@ interface CustomCardScope : ColumnScope {
  * @param degrees The rotation angle in degrees when fully pressed.
  */
 @Composable
-fun Modifier.cardPressRotation(degrees: Float): Modifier {
+internal fun Modifier.cardPressRotation(degrees: Float): Modifier {
     val scope = LocalCustomCardScope.current
     return this.graphicsLayer {
         val progress = scope?.pressProgress ?: IDLE_PROGRESS
@@ -246,7 +246,7 @@ fun Modifier.cardPressRotation(degrees: Float): Modifier {
  * @param elevation The elevation shadow to cast with the morphing shape.
  */
 @Composable
-fun Modifier.cardPressClip(
+internal fun Modifier.cardPressClip(
     defaultShape: RoundedCornerShape,
     pressedShape: RoundedCornerShape = RoundedCornerShape(DEFAULT_PRESSED_CORNER_PERCENT),
     elevation: Dp = 0.dp,
@@ -308,8 +308,8 @@ private class MorphingCornerShape(
         if (this === other) return true
         if (other !is MorphingCornerShape) return false
         return defaultShape == other.defaultShape &&
-            pressedShape == other.pressedShape &&
-            progress == other.progress
+                pressedShape == other.pressedShape &&
+                progress == other.progress
     }
 
     override fun hashCode(): Int {
