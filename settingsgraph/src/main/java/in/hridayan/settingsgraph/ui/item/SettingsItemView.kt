@@ -55,6 +55,8 @@ import `in`.hridayan.settingsgraph.model.ItemBehavior
 import `in`.hridayan.settingsgraph.model.RadioButtonOption
 import `in`.hridayan.settingsgraph.ui.card.CustomCard
 import `in`.hridayan.settingsgraph.ui.card.CustomCardShape
+import `in`.hridayan.settingsgraph.ui.card.cardPressClip
+import `in`.hridayan.settingsgraph.ui.card.cardPressRotation
 import `in`.hridayan.settingsgraph.ui.card.cardShapeForPosition
 
 /**
@@ -223,12 +225,11 @@ private fun ItemLeadingIcon(icon: ImageVector?, @DrawableRes iconResId: Int?, en
         MaterialTheme.colorScheme.run { if (enabled) onPrimaryContainer else onSurface }
 
     val iconSize = 20.dp
-    val iconBgShape = CircleShape
 
     Box(
         modifier = Modifier
-            .shadow(elevation = 1.dp, shape = iconBgShape)
-            .clip(iconBgShape)
+            .cardPressRotation(-15f)
+            .cardPressClip(defaultShape = CircleShape, elevation = 1.dp)
             .background(containerColor)
             .padding(10.dp),
         contentAlignment = Alignment.Center

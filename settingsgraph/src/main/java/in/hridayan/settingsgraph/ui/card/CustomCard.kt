@@ -14,6 +14,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -21,10 +22,14 @@ import androidx.compose.material3.CardElevation
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
@@ -41,6 +46,12 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
+
+private const val PRESSED_PROGRESS = 1f
+private const val IDLE_PROGRESS = 0f
+private const val IDLE_SCALE = 1f
+private const val DEFAULT_PRESSED_CORNER_PERCENT = 25
 
 private class AnimatedCornerShape(
     private val topStart: () -> Dp,
@@ -51,7 +62,7 @@ private class AnimatedCornerShape(
     override fun createOutline(
         size: Size,
         layoutDirection: LayoutDirection,
-        density: Density
+        density: Density,
     ): Outline {
         val ts = with(density) { topStart().coerceIn(0.dp, 100.dp).toPx() }
         val te = with(density) { topEnd().coerceIn(0.dp, 100.dp).toPx() }
@@ -63,19 +74,19 @@ private class AnimatedCornerShape(
                 topLeft = CornerRadius(ts, ts),
                 topRight = CornerRadius(te, te),
                 bottomRight = CornerRadius(be, be),
-                bottomLeft = CornerRadius(bs, bs)
+                bottomLeft = CornerRadius(bs, bs),
             )
         )
     }
 }
 
 /**
- * Internal animated card composable used by all settings item views.
+ * Animated card composable used by settings item views.
  *
- * Animates corner radius and scale on press/hover. Not accessible to library consumers.
+ * Animates corner radius and scale on press/hover.
  */
 @Composable
-internal fun CustomCard(
+fun CustomCard(
     modifier: Modifier = Modifier,
     shape: CustomCardShape = CustomCardShape(all = 20.dp),
     pressedCornerRadius: Dp = 12.dp,
@@ -89,14 +100,17 @@ internal fun CustomCard(
     clickable: Boolean = true,
     onClick: () -> Unit = {},
     onLongClick: () -> Unit = {},
-    content: @Composable ColumnScope.() -> Unit = {},
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable CustomCardScope.() -> Unit = {},
 ) {
     val density = LocalDensity.current
     var heightPx by remember { mutableFloatStateOf(0f) }
 
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val isHovered by interactionSource.collectIsHoveredAsState()
+    val isPressedState = interactionSource.collectIsPressedAsState()
+    val isHoveredState = interactionSource.collectIsHoveredAsState()
+
+    val isPressed = isPressedState.value
+    val isHovered = isHoveredState.value
     val doCardInteractions = isPressed || isHovered
 
     val resolvedTopStart = shape.topStart.toDp(heightPx, density)
@@ -125,9 +139,15 @@ internal fun CustomCard(
         label = "corner_be",
     )
     val animatedScale by animateFloatAsState(
-        targetValue = if (doCardInteractions) pressedScale else 1f,
+        targetValue = if (doCardInteractions) pressedScale else IDLE_SCALE,
         animationSpec = springFloat,
         label = "scale",
+    )
+
+    val pressProgressState = animateFloatAsState(
+        targetValue = if (doCardInteractions) PRESSED_PROGRESS else IDLE_PROGRESS,
+        animationSpec = springFloat,
+        label = "press_progress_anim",
     )
 
     val animatedShape = remember {
@@ -135,7 +155,7 @@ internal fun CustomCard(
             topStart = { topStart },
             topEnd = { topEnd },
             bottomStart = { bottomStart },
-            bottomEnd = { bottomEnd }
+            bottomEnd = { bottomEnd },
         )
     }
 
@@ -164,9 +184,156 @@ internal fun CustomCard(
                 )
                 .indication(interactionSource = interactionSource, indication = ripple()),
         ) {
-            content()
+            val cardScope = remember(this, interactionSource) {
+                CustomCardScopeImpl(
+                    columnScope = this,
+                    pressProgressState = pressProgressState,
+                    isPressedState = isPressedState,
+                    isHoveredState = isHoveredState,
+                )
+            }
+
+            CompositionLocalProvider(LocalCustomCardScope provides cardScope) {
+                cardScope.content()
+            }
         }
     }
+}
+
+val LocalCustomCardScope = staticCompositionLocalOf<CustomCardScope?> { null }
+
+/**
+ * Receiver scope for content within a [CustomCard].
+ */
+@Stable
+interface CustomCardScope : ColumnScope {
+    /**
+     * Normalized progress of the card's press animation from 0f to 1f.
+     */
+    val pressProgress: Float
+
+    /**
+     * Whether the card is currently pressed.
+     */
+    val isPressed: Boolean
+
+    /**
+     * Whether the card is currently hovered.
+     */
+    val isHovered: Boolean
+}
+
+/**
+ * Rotates the composable around its center based on the enclosing card's press progress.
+ *
+ * @param degrees The rotation angle in degrees when fully pressed.
+ */
+@Composable
+fun Modifier.cardPressRotation(degrees: Float): Modifier {
+    val scope = LocalCustomCardScope.current
+    return this.graphicsLayer {
+        val progress = scope?.pressProgress ?: IDLE_PROGRESS
+        rotationZ = progress * degrees
+    }
+}
+
+/**
+ * Clips the composable using a shape that morphs between [defaultShape] and [pressedShape]
+ * in lockstep with the enclosing card's press animation, optionally casting a shadow.
+ *
+ * @param defaultShape The shape when idle.
+ * @param pressedShape The shape when pressed, defaulting to a 25% rounded corner shape.
+ * @param elevation The elevation shadow to cast with the morphing shape.
+ */
+@Composable
+fun Modifier.cardPressClip(
+    defaultShape: RoundedCornerShape,
+    pressedShape: RoundedCornerShape = RoundedCornerShape(DEFAULT_PRESSED_CORNER_PERCENT),
+    elevation: Dp = 0.dp,
+): Modifier {
+    val scope = LocalCustomCardScope.current
+    return this.graphicsLayer {
+        val progress = scope?.pressProgress ?: IDLE_PROGRESS
+        shadowElevation = elevation.toPx()
+        clip = true
+        shape = MorphingCornerShape(
+            defaultShape = defaultShape,
+            pressedShape = pressedShape,
+            progress = progress,
+        )
+    }
+}
+
+private class MorphingCornerShape(
+    private val defaultShape: RoundedCornerShape,
+    private val pressedShape: RoundedCornerShape,
+    private val progress: Float,
+) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density,
+    ): Outline {
+        val maxRadius = size.minDimension / 2f
+
+        val defaultTs = defaultShape.topStart.toPx(size, density)
+        val pressedTs = pressedShape.topStart.toPx(size, density)
+        val ts = lerp(defaultTs, pressedTs, progress).coerceIn(0f, maxRadius)
+
+        val defaultTe = defaultShape.topEnd.toPx(size, density)
+        val pressedTe = pressedShape.topEnd.toPx(size, density)
+        val te = lerp(defaultTe, pressedTe, progress).coerceIn(0f, maxRadius)
+
+        val defaultBe = defaultShape.bottomEnd.toPx(size, density)
+        val pressedBe = pressedShape.bottomEnd.toPx(size, density)
+        val be = lerp(defaultBe, pressedBe, progress).coerceIn(0f, maxRadius)
+
+        val defaultBs = defaultShape.bottomStart.toPx(size, density)
+        val pressedBs = pressedShape.bottomStart.toPx(size, density)
+        val bs = lerp(defaultBs, pressedBs, progress).coerceIn(0f, maxRadius)
+
+        val isLtr = layoutDirection == LayoutDirection.Ltr
+        return Outline.Rounded(
+            RoundRect(
+                rect = Rect(Offset.Zero, size),
+                topLeft = CornerRadius(if (isLtr) ts else te, if (isLtr) ts else te),
+                topRight = CornerRadius(if (isLtr) te else ts, if (isLtr) te else ts),
+                bottomRight = CornerRadius(if (isLtr) be else bs, if (isLtr) be else bs),
+                bottomLeft = CornerRadius(if (isLtr) bs else be, if (isLtr) bs else be),
+            )
+        )
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MorphingCornerShape) return false
+        return defaultShape == other.defaultShape &&
+            pressedShape == other.pressedShape &&
+            progress == other.progress
+    }
+
+    override fun hashCode(): Int {
+        var result = defaultShape.hashCode()
+        result = 31 * result + pressedShape.hashCode()
+        result = 31 * result + progress.hashCode()
+        return result
+    }
+}
+
+internal class CustomCardScopeImpl(
+    columnScope: ColumnScope,
+    private val pressProgressState: State<Float>,
+    private val isPressedState: State<Boolean>,
+    private val isHoveredState: State<Boolean>,
+) : CustomCardScope, ColumnScope by columnScope {
+    override val pressProgress: Float
+        get() = pressProgressState.value
+
+    override val isPressed: Boolean
+        get() = isPressedState.value
+
+    override val isHovered: Boolean
+        get() = isHoveredState.value
 }
 
 private const val DampingRatioMediumHighBouncy = 0.35f
