@@ -9,9 +9,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -62,6 +64,34 @@ private val DIVIDER_HORIZONTAL_PADDING = 16.dp
 private val DIVIDER_VERTICAL_PADDING = 8.dp
 
 /**
+ * Resolves the top app bar offset and notifies highlight listeners when scrolling to a highlighted setting.
+ *
+ * @param scrollBehavior Optional [TopAppBarScrollBehavior] for Material 3 app bars.
+ * @param legacyState Optional legacy [TopAppBarState].
+ * @param collapseOnHighlight Whether non-pinned app bars should collapse during highlight scroll.
+ * @param onHighlightScroll Optional callback invoked during highlight scroll.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+internal fun resolveTopAppBarOffsetOnHighlight(
+    scrollBehavior: TopAppBarScrollBehavior?,
+    legacyState: TopAppBarState?,
+    collapseOnHighlight: Boolean,
+    onHighlightScroll: (() -> Unit)?,
+) {
+    onHighlightScroll?.invoke()
+
+    if (!collapseOnHighlight) return
+
+    if (scrollBehavior != null) {
+        if (!scrollBehavior.isPinned) {
+            scrollBehavior.state.heightOffset = scrollBehavior.state.heightOffsetLimit
+        }
+    } else if (legacyState != null) {
+        legacyState.heightOffset = legacyState.heightOffsetLimit
+    }
+}
+
+/**
  * Renders a settings screen defined by the [content] graph block.
  *
  * Callbacks are resolved in two tiers for each item:
@@ -71,8 +101,23 @@ private val DIVIDER_VERTICAL_PADDING = 8.dp
  * The graph is rebuilt on every recomposition so that [visible] lambdas and dynamic title/
  * description lambdas always reflect the latest captured values from the enclosing composable.
  *
+ * Compatible with any app bar type:
+ * - When using Material 3 top app bars with scroll behaviors, pass [topAppBarScrollBehavior].
+ *   Pinned app bars are automatically protected and will never collapse off-screen.
+ * - When using two-row collapsible app bars ([MediumTopAppBar], [LargeTopAppBar]), set
+ *   [collapseTopAppBarOnHighlight] to true if you wish to collapse the large title when
+ *   scrolling to a search result.
+ * - For custom app bars, pass [onHighlightScroll] to execute custom collapse or animation logic.
+ * - If no app bar or a static app bar is used, leave top bar parameters null and provide [contentPadding].
+ *
  * @param modifier Modifier applied to the [LazyColumn].
- * @param topAppBarState When provided, the top bar is collapsed before scrolling to a highlighted item.
+ * @param topAppBarScrollBehavior Optional [TopAppBarScrollBehavior] to inspect pinned status and
+ *                                optionally coordinate top bar collapse during highlight scrolling.
+ * @param collapseTopAppBarOnHighlight When true, collapsible (non-pinned) top app bars are collapsed
+ *                                     to maximize screen space when scrolling to a highlighted item.
+ *                                     Defaults to true. Pinned app bars are protected and will never collapse.
+ * @param onHighlightScroll Optional callback invoked when scrolling to a highlighted item,
+ *                           allowing custom app bars to react.
  * @param hapticsEnabled Whether haptic feedback is enabled on item interactions.
  * @param itemPaddingHorizontal Horizontal padding applied to each item card.
  * @param itemPaddingVertical Vertical padding applied to each item card.
@@ -82,16 +127,101 @@ private val DIVIDER_VERTICAL_PADDING = 8.dp
  * @param contentPadding Content padding applied to the [LazyColumn].
  * @param content graph block defining the groups and items in this settings screen.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsColumn(
     modifier: Modifier = Modifier,
-    topAppBarState: TopAppBarState? = null,
+    topAppBarScrollBehavior: TopAppBarScrollBehavior? = null,
+    collapseTopAppBarOnHighlight: Boolean = true,
+    onHighlightScroll: (() -> Unit)? = null,
     hapticsEnabled: Boolean = true,
     itemPaddingHorizontal: Dp = 15.dp,
     itemPaddingVertical: Dp = 1.dp,
     groupHeader: (@Composable (String) -> Unit)? = null,
     listState: LazyListState = rememberLazyListState(),
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    content: SettingsGraphBuilder.() -> Unit,
+) {
+    SettingsColumnInternal(
+        modifier = modifier,
+        topAppBarScrollBehavior = topAppBarScrollBehavior,
+        legacyTopAppBarState = null,
+        collapseTopAppBarOnHighlight = collapseTopAppBarOnHighlight,
+        onHighlightScroll = onHighlightScroll,
+        hapticsEnabled = hapticsEnabled,
+        itemPaddingHorizontal = itemPaddingHorizontal,
+        itemPaddingVertical = itemPaddingVertical,
+        groupHeader = groupHeader,
+        listState = listState,
+        contentPadding = contentPadding,
+        content = content,
+    )
+}
+
+/**
+ * Legacy overload of [SettingsColumn] accepting [TopAppBarState].
+ *
+ * @param modifier Modifier applied to the [LazyColumn].
+ * @param topAppBarState Legacy top app bar state. Kept for backward compatibility.
+ * @param hapticsEnabled Whether haptic feedback is enabled on item interactions.
+ * @param itemPaddingHorizontal Horizontal padding applied to each item card.
+ * @param itemPaddingVertical Vertical padding applied to each item card.
+ * @param groupHeader Optional composable used to render group header labels. When null, a default
+ *                    [Text] styled with [MaterialTheme.typography.labelLarge] is used.
+ * @param listState The [LazyListState] controlling scroll position.
+ * @param contentPadding Content padding applied to the [LazyColumn].
+ * @param content graph block defining the groups and items in this settings screen.
+ */
+@Deprecated(
+    message = "Use the canonical SettingsColumn overload. If using a Material 3 TopAppBar, pass topAppBarScrollBehavior instead of topAppBarState to preserve pinned app bar behavior.",
+    replaceWith = ReplaceWith(
+        "SettingsColumn(modifier = modifier, hapticsEnabled = hapticsEnabled, itemPaddingHorizontal = itemPaddingHorizontal, itemPaddingVertical = itemPaddingVertical, groupHeader = groupHeader, listState = listState, contentPadding = contentPadding, content = content)"
+    ),
+    level = DeprecationLevel.WARNING
+)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsColumn(
+    modifier: Modifier = Modifier,
+    topAppBarState: TopAppBarState?,
+    hapticsEnabled: Boolean = true,
+    itemPaddingHorizontal: Dp = 15.dp,
+    itemPaddingVertical: Dp = 1.dp,
+    groupHeader: (@Composable (String) -> Unit)? = null,
+    listState: LazyListState = rememberLazyListState(),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    content: SettingsGraphBuilder.() -> Unit,
+) {
+    SettingsColumnInternal(
+        modifier = modifier,
+        topAppBarScrollBehavior = null,
+        legacyTopAppBarState = topAppBarState,
+        collapseTopAppBarOnHighlight = true,
+        onHighlightScroll = null,
+        hapticsEnabled = hapticsEnabled,
+        itemPaddingHorizontal = itemPaddingHorizontal,
+        itemPaddingVertical = itemPaddingVertical,
+        groupHeader = groupHeader,
+        listState = listState,
+        contentPadding = contentPadding,
+        content = content,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsColumnInternal(
+    modifier: Modifier,
+    topAppBarScrollBehavior: TopAppBarScrollBehavior?,
+    legacyTopAppBarState: TopAppBarState?,
+    collapseTopAppBarOnHighlight: Boolean,
+    onHighlightScroll: (() -> Unit)?,
+    hapticsEnabled: Boolean,
+    itemPaddingHorizontal: Dp,
+    itemPaddingVertical: Dp,
+    groupHeader: (@Composable (String) -> Unit)?,
+    listState: LazyListState,
+    contentPadding: PaddingValues,
     content: SettingsGraphBuilder.() -> Unit,
 ) {
     val plan = SettingsGraphBuilder().apply(content).build().toRenderPlan()
@@ -131,9 +261,12 @@ fun SettingsColumn(
                             (visibleItem.offset + visibleItem.size) <= layoutInfo.viewportEndOffset
 
                     if (!isFullyVisible) {
-                        topAppBarState?.let { it.heightOffset = it.heightOffsetLimit }
-                        // A negative offset pushes the item downwards into the viewport,
-                        // so -(height / 3) places it roughly 1/3 down from the top edge.
+                        resolveTopAppBarOffsetOnHighlight(
+                            scrollBehavior = topAppBarScrollBehavior,
+                            legacyState = legacyTopAppBarState,
+                            collapseOnHighlight = collapseTopAppBarOnHighlight,
+                            onHighlightScroll = onHighlightScroll,
+                        )
                         val centerOffset = -(layoutInfo.viewportSize.height / 3)
                         listState.animateScrollToItem(scrollTarget, centerOffset)
                     }

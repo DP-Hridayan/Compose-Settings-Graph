@@ -68,24 +68,74 @@ SettingsColumn(...) {
 }
 ```
 
-## Scroll Behavior Integration
+## App Bar & Scroll Behavior Integration
 
-The `SettingsColumn` is fully compatible with Material 3 nested scrolling protocols. Pass a `TopAppBarState` instance directly into the root configuration to synchronize list displacement vectors with custom collapsed app bars.
+`SettingsColumn` is designed to work seamlessly with any type of top app bar or custom header.
+
+### Standard & Pinned App Bars
+
+For standard single-row app bars (`TopAppBar`, `CenterAlignedTopAppBar`), simply apply `contentPadding` from `Scaffold`. Pass `topAppBarScrollBehavior` when using Material 3 scroll behaviors; pinned app bars are automatically detected and will never be collapsed off-screen during highlight navigation:
 
 ```kotlin
 val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
 
 Scaffold(
     modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-    topBar = { TopAppBar(...) }
+    topBar = {
+        TopAppBar(
+            title = { Text("Settings") },
+            scrollBehavior = scrollBehavior,
+        )
+    }
 ) { paddingValues ->
     SettingsColumn(
-        modifier = Modifier,
+        modifier = Modifier.fillMaxSize(),
         contentPadding = paddingValues,
-        topAppBarState = scrollBehavior.state,
+        topAppBarScrollBehavior = scrollBehavior,
         hapticsEnabled = true,
     ) {
         // ...
     }
+}
+```
+
+### Collapsible Two-Row App Bars (`LargeTopAppBar` / `MediumTopAppBar`)
+
+When using two-row app bars with `exitUntilCollapsedScrollBehavior`, you can optionally collapse the large title down to the pinned compact bar when scrolling to a highlighted search result:
+
+```kotlin
+val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+
+Scaffold(
+    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    topBar = {
+        LargeTopAppBar(
+            title = { Text("Settings") },
+            scrollBehavior = scrollBehavior,
+        )
+    }
+) { paddingValues ->
+    SettingsColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = paddingValues,
+        topAppBarScrollBehavior = scrollBehavior,
+        collapseTopAppBarOnHighlight = true,
+    ) {
+        // ...
+    }
+}
+```
+
+### Custom & Static Headers
+
+For custom headers, non-Material 3 components, or custom animation coordinators, use `onHighlightScroll` to trigger custom collapse or transition effects:
+
+```kotlin
+SettingsColumn(
+    modifier = Modifier.fillMaxSize(),
+    contentPadding = paddingValues,
+    onHighlightScroll = { customHeaderState.collapse() },
+) {
+    // ...
 }
 ```

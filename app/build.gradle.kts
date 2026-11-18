@@ -18,8 +18,8 @@ android {
         applicationId = "in.hridayan.settingsgraph.sample"
         minSdk = 28
         targetSdk = 37
-        versionCode = 3
-        versionName = "1.3.0"
+        versionCode = 4
+        versionName = "1.4.0"
     }
 
     compileOptions {
