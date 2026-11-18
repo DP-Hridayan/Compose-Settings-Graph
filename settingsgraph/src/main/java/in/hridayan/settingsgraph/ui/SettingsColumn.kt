@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -83,7 +82,6 @@ private val DIVIDER_VERTICAL_PADDING = 8.dp
  * @param contentPadding Content padding applied to the [LazyColumn].
  * @param content graph block defining the groups and items in this settings screen.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsColumn(
     modifier: Modifier = Modifier,
@@ -250,7 +248,7 @@ private fun LazyItemScope.SettingsItemEntry(
     val currentOnCheckedChange by rememberUpdatedState(onCheckedChange)
     val currentOnIntChanged by rememberUpdatedState(onIntChanged)
 
-        val onClickLambda = remember(nodeKey, onClick != null) {
+    val onClickLambda = remember(nodeKey, onClick != null) {
         if (onClick != null) {
             { currentOnClick?.invoke(nodeKey) ?: Unit }
         } else null

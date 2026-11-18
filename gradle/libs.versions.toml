@@ -1,16 +1,16 @@
 [versions]
 activityCompose = "1.13.0"
-agp = "9.4.0"
-composeBom = "2026.08.00"
-coreKtx = "1.19.0"
-kotlin = "2.4.10"
+agp = "9.5.1"
+composeBom = "2026.09.00"
+coreKtx = "1.19.1"
+kotlin = "2.4.21"
 material = "1.14.0"
-material3 = "1.5.0-alpha27"
+material3 = "1.5.0-rc01"
 materialIconsExtended = "1.7.8"
 appcompat = "1.8.0"
 vanniktech-maven-publish = "0.37.0"
-compose-stability-analyzer = "0.13.0"
-annotation = "1.10.0"
+compose-stability-analyzer = "0.15.0"
+annotation = "1.11.0"
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
